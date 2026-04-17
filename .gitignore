@@ -1,0 +1,39 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Node modules
+node_modules/
+
+# Environment variables (Critical: Keeps your database URL secret)
+.env
+.env.test
+.env.production
+.env.local
+
+# Vite / Frontend build output
+/frontend/dist/
+/frontend/dist-ssr/
+/frontend/coverage/
+
+# Mac / OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Editors and IDEs
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
