@@ -36,7 +36,7 @@ function Members() {
   };
 
   const deleteMember = async (id) => {
-    if(!window.confirm('Are you sure you want to delete this member?')) return;
+    if(!window.confirm('Are you sure you want to completely end this membership and remove the member?')) return;
     try {
       await axios.delete(`${API_URL}/members/${id}`);
       toast.success('Member deleted!');
@@ -87,9 +87,10 @@ function Members() {
           {members.map(member => (
             <div key={member.id} className="data-card">
               <div className="card-actions">
-                <button className="icon-btn" onClick={() => deleteMember(member.id)}><Trash2 size={16} /></button>
+                <button className="icon-btn" onClick={() => deleteMember(member.id)} title="End Membership"><Trash2 size={16} /></button>
               </div>
               <h3 className="card-title">{member.name}</h3>
+              <p className="card-subtitle" style={{fontSize: "0.85rem", color: "var(--primary)", marginTop: "0.25rem", marginBottom: "1rem"}}>ID: <strong>{member.unique_id}</strong></p>
               
               <div className="card-body">
                 <p className="card-subtitle"><Mail size={16} /> {member.email}</p>

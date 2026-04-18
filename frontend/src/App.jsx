@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Book, Users, ArrowRightLeft, Loader2, BookOpen } from 'lucide-react';
+import { Book, Users, ArrowRightLeft, Loader2, BookOpen, Info, HelpCircle } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 
 export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
@@ -9,11 +9,14 @@ import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
 import Books from './pages/Books';
 import Members from './pages/Members';
 import Transactions from './pages/Transactions';
+import Employees from './pages/Employees';
+import { UserCog } from 'lucide-react';
 
 const Sidebar = () => {
   const navItems = [
     { name: 'Books Catalog', path: '/', icon: <Book size={20} /> },
     { name: 'Members', path: '/members', icon: <Users size={20} /> },
+    { name: 'Employees', path: '/employees', icon: <UserCog size={20} /> },
     { name: 'Issues & Returns', path: '/transactions', icon: <ArrowRightLeft size={20} /> },
   ];
 
@@ -21,7 +24,7 @@ const Sidebar = () => {
     <aside className="sidebar">
       <div className="sidebar-header">
         <BookOpen size={32} className="logo-icon" />
-        <h2>Nexus</h2>
+        <h2>Library Management</h2>
       </div>
       <nav className="sidebar-nav">
         {navItems.map((item) => (
@@ -35,6 +38,23 @@ const Sidebar = () => {
           </NavLink>
         ))}
       </nav>
+
+      <div className="sidebar-footer">
+        <div className="footer-links">
+          <a href="#" className="footer-link"><Info size={14} /> About Us</a>
+          <a href="#" className="footer-link"><HelpCircle size={14} /> Help</a>
+        </div>
+        
+        <div className="user-profile">
+          <div className="avatar">
+            <img src="https://ui-avatars.com/api/?name=System+Admin&background=27272a&color=fafafa&rounded=true" alt="Admin" />
+          </div>
+          <div className="user-info">
+            <span className="user-name">System Admin</span>
+            <span className="user-email">Library</span>
+          </div>
+        </div>
+      </div>
     </aside>
   );
 };
@@ -49,6 +69,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Books />} />
             <Route path="/members" element={<Members />} />
+            <Route path="/employees" element={<Employees />} />
             <Route path="/transactions" element={<Transactions />} />
           </Routes>
         </main>

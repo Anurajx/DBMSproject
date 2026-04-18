@@ -30,6 +30,15 @@ const initDB = async () => {
         membership_date DATE DEFAULT CURRENT_DATE
       );
 
+      CREATE TABLE IF NOT EXISTS employees (
+        id SERIAL PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        role VARCHAR(100) NOT NULL,
+        email VARCHAR(255) UNIQUE NOT NULL,
+        phone VARCHAR(20),
+        hire_date DATE DEFAULT CURRENT_DATE
+      );
+
       CREATE TABLE IF NOT EXISTS transactions (
         id SERIAL PRIMARY KEY,
         book_id INTEGER REFERENCES books(id) ON DELETE CASCADE,
@@ -43,9 +52,25 @@ const initDB = async () => {
     
     // Safely add the available_quantity column if this is a legacy table from before the update
     await pool.query(`ALTER TABLE books ADD COLUMN IF NOT EXISTS available_quantity INTEGER;`);
+    await pool.query(`ALTER TABLE books ADD COLUMN IF NOT EXISTS book_section VARCHAR(50) DEFAULT 'General';`);
+    await pool.query(`ALTER TABLE books ADD COLUMN IF NOT EXISTS unique_id VARCHAR(50);`);
     
     // Auto-update legacy books to have available_quantity if they don't have it set (which is true for new columns)
     await pool.query(`UPDATE books SET available_quantity = quantity WHERE available_quantity IS NULL;`);
+    
+    // Auto-update legacy books to have unique_id
+    await pool.query(`UPDATE books SET unique_id = 'LIB-LEGACY-' || id WHERE unique_id IS NULL;`);
+    await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_books_unique_id ON books(unique_id);`);
+    
+    // Members unique_id setup
+    await pool.query(`ALTER TABLE members ADD COLUMN IF NOT EXISTS unique_id VARCHAR(50);`);
+    await pool.query(`UPDATE members SET unique_id = 'MEM-LEGACY-' || id WHERE unique_id IS NULL;`);
+    await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_members_unique_id ON members(unique_id);`);
+
+    // Employees unique_id setup
+    await pool.query(`ALTER TABLE employees ADD COLUMN IF NOT EXISTS unique_id VARCHAR(50);`);
+    await pool.query(`UPDATE employees SET unique_id = 'EMP-LEGACY-' || id WHERE unique_id IS NULL;`);
+    await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_employees_unique_id ON employees(unique_id);`);
     
     console.log("Database initialized successfully with relations.");
   } catch (err) {
@@ -66,10 +91,13 @@ app.get('/api/books', async (req, res) => {
 
 app.post('/api/books', async (req, res) => {
   try {
-    const { title, author, published_year, quantity } = req.body;
+    const { title, author, published_year, quantity, book_section } = req.body;
+    // Generate unique ID like LIB-1A-78FC
+    const unique_id = 'LIB-' + (book_section ? book_section.substring(0, 2) + '-' : '') + Math.random().toString(36).substr(2, 6).toUpperCase();
+    
     const newBook = await pool.query(
-      'INSERT INTO books (title, author, published_year, quantity, available_quantity) VALUES ($1, $2, $3, $4, $4) RETURNING *',
-      [title, author, published_year, quantity]
+      'INSERT INTO books (title, author, published_year, quantity, available_quantity, book_section, unique_id) VALUES ($1, $2, $3, $4, $4, $5, $6) RETURNING *',
+      [title, author, published_year, quantity, book_section || 'General', unique_id]
     );
     res.json(newBook.rows[0]);
   } catch (err) {
@@ -100,9 +128,10 @@ app.get('/api/members', async (req, res) => {
 app.post('/api/members', async (req, res) => {
   try {
     const { name, email, phone } = req.body;
+    const unique_id = 'MEM-' + Math.random().toString(36).substr(2, 6).toUpperCase();
     const newMember = await pool.query(
-      'INSERT INTO members (name, email, phone) VALUES ($1, $2, $3) RETURNING *',
-      [name, email, phone]
+      'INSERT INTO members (name, email, phone, unique_id) VALUES ($1, $2, $3, $4) RETURNING *',
+      [name, email, phone, unique_id]
     );
     res.json(newMember.rows[0]);
   } catch (err) {
@@ -114,6 +143,40 @@ app.delete('/api/members/:id', async (req, res) => {
   try {
     await pool.query('DELETE FROM members WHERE id = $1', [req.params.id]);
     res.json({ message: "Member deleted" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+
+// --- EMPLOYEES ROUTES ---
+app.get('/api/employees', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM employees ORDER BY id DESC');
+    res.json(result.rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/employees', async (req, res) => {
+  try {
+    const { name, role, email, phone } = req.body;
+    const unique_id = 'EMP-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+    const newEmployee = await pool.query(
+      'INSERT INTO employees (name, role, email, phone, unique_id) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [name, role, email, phone, unique_id]
+    );
+    res.json(newEmployee.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/employees/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM employees WHERE id = $1', [req.params.id]);
+    res.json({ message: "Employee deleted" });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
