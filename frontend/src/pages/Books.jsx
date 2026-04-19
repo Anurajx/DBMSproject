@@ -52,11 +52,19 @@ function Books() {
   };
 
   const filteredBooks = books.filter(b => {
-    const term = searchTerm.toLowerCase();
-    return b.title.toLowerCase().includes(term) || 
-           b.author.toLowerCase().includes(term) ||
-           (b.unique_id && b.unique_id.toLowerCase().includes(term)) ||
-           (b.book_section && b.book_section.toLowerCase().includes(term));
+    if (!searchTerm) return true;
+    const term = String(searchTerm).toLowerCase().trim();
+    
+    // Safely cast every property to a string to prevent native React crash errors
+    const safeTitle = String(b.title || '').toLowerCase();
+    const safeAuthor = String(b.author || '').toLowerCase();
+    const safeId = String(b.unique_id || '').toLowerCase();
+    const safeSection = String(b.book_section || '').toLowerCase();
+    
+    return safeTitle.includes(term) || 
+           safeAuthor.includes(term) ||
+           safeId.includes(term) ||
+           safeSection.includes(term);
   });
 
   return (
